@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CSV Quiz Game</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+    .question { font-size: 1.2em; margin: 20px 0; }
+    .options button { display: block; margin: 10px auto; padding: 10px; width: 200px; }
+    .result { font-weight: bold; margin-top: 15px; }
+  </style>
+</head>
+<body>
+  <h1>Quiz Game</h1>
+  <div id="quiz">
+    <div class="question"></div>
+    <div class="options"></div>
+    <div class="result"></div>
+    <button id="nextBtn" style="display:none;">Next Question</button>
+  </div>
+
+  <script>
+    let questions = [];
+    let currentIndex = 0;
+
+    // Load CSV file
+    async function loadCSV() {
+      const response = await fetch("questions.csv");
+      const data = await response.text();
+      const rows = data.trim().split("\n").slice(1); // skip header
+      questions = rows.map(row => {
+        const [question, optionA, optionB, optionC, correct] = row.split(",");
+        return { question, options: [optionA, optionB, optionC], correct };
+      });
+      shuffle(questions);
+      showQuestion();
+    }
+
+    function showQuestion() {
+      const q = questions[currentIndex];
+      document.querySelector(".question").textContent = q.question;
+      const optionsDiv = document.querySelector(".options");
+      optionsDiv.innerHTML = "";
+      q.options.forEach(option => {
+        const btn = document.createElement("button");
+        btn.textContent = option;
+        btn.onclick = () => checkAnswer(option, q.correct);
+        optionsDiv.appendChild(btn);
+      });
+      document.querySelector(".result").textContent = "";
+      document.getElementById("nextBtn").style.display = "none";
+    }
+
+    function checkAnswer(selected, correct) {
+      const resultDiv = document.querySelector(".result");
+      if (selected === correct) {
+        resultDiv.textContent = "✅ Correct!";
+        resultDiv.style.color = "green";
+      } else {
+        resultDiv.textContent = "❌ Wrong! Correct answer: " + correct;
+        resultDiv.style.color = "red";
+      }
+      document.getElementById("nextBtn").style.display = "block";
+    }
+
+    function nextQuestion() {
+      currentIndex++;
+      if (currentIndex < questions.length) {
+        showQuestion();
+      } else {
+        document.querySelector("#quiz").innerHTML = "<h2>Quiz Finished 🎉</h2>";
+      }
+    }
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    document.getElementById("nextBtn").onclick = nextQuestion;
+
+    loadCSV();
+  </script>
+</body>
+</html>
